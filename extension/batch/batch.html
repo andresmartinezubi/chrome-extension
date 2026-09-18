@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Batch Capture</title>
+  <link rel="stylesheet" href="batch.css">
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <svg class="hdr-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+    <span class="hdr-title">Batch Capture</span>
+    <span id="statusBadge" class="badge badge-running">Running</span>
+  </header>
+
+  <!-- Progress bar -->
+  <section class="progress-section">
+    <div class="progress-row">
+      <span id="progressLabel" class="progress-label">0 / 0</span>
+      <span id="currentLabel"  class="current-label"></span>
+    </div>
+    <div class="progress-track">
+      <div id="progressBar" class="progress-bar" style="width:0%"></div>
+    </div>
+  </section>
+
+  <!-- Results list -->
+  <ul id="resultsList" class="results-list"></ul>
+
+  <!-- Footer actions (shown when done) -->
+  <footer id="footerActions" class="footer hidden">
+    <span id="summaryLabel" class="summary-label"></span>
+    <button id="zipBtn" class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download ZIP
+    </button>
+  </footer>
+
+</div>
+<script src="../lib/jszip.min.js"></script>
+<script src="batch.js"></script>
+</body>
+</html>

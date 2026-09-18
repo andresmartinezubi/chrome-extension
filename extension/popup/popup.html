@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Full Page Screenshot</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <svg class="hdr-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+    Full Page Screenshot
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="single">Single</button>
+    <button class="tab"        data-tab="batch">Batch</button>
+  </div>
+
+  <!-- ── Viewport ── -->
+  <section class="section">
+    <div class="sec-title">Viewport</div>
+    <div class="vp-grid">
+      <label class="vp-opt"><input type="radio" name="viewport" value="current" checked><span>Current</span></label>
+      <label class="vp-opt"><input type="radio" name="viewport" value="1440"><span>Desktop <em>1440px</em></span></label>
+      <label class="vp-opt"><input type="radio" name="viewport" value="768"><span>Tablet <em>768px</em></span></label>
+      <label class="vp-opt"><input type="radio" name="viewport" value="375"><span>Mobile <em>375px</em></span></label>
+      <label class="vp-opt vp-custom">
+        <input type="radio" name="viewport" value="custom">
+        <span>Custom</span>
+        <input type="number" id="vpCustom" min="200" max="3840" placeholder="px" class="vp-num">
+      </label>
+    </div>
+  </section>
+
+  <!-- ── Options ── -->
+  <section class="section">
+    <div class="sec-title">Options</div>
+    <div class="opt-row">
+      <label for="delayInput">Delay before capture</label>
+      <div class="num-row">
+        <input type="number" id="delayInput" min="0" max="60" value="0" class="num-input"> sec
+      </div>
+    </div>
+    <label class="check-row">
+      <input type="checkbox" id="prePassCheck">
+      <span>Scroll pre-pass <em>(trigger animations & lazy-load)</em></span>
+    </label>
+  </section>
+
+  <!-- ── Single panel ── -->
+  <div id="panelSingle" class="action-panel">
+    <button id="captureBtn" class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      <span id="captureBtnText">Capture Page</span>
+      <svg id="captureSpinner" class="spinner hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+      </svg>
+    </button>
+    <p id="captureStatus" class="status-msg hidden"></p>
+  </div>
+
+  <!-- ── Batch panel ── -->
+  <div id="panelBatch" class="action-panel hidden">
+    <div id="dropZone" class="drop-zone">
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" hidden>
+      <button id="browseBtn" class="btn-ghost-sm">Browse file</button>
+      <span class="drop-hint">or drag & drop CSV / Excel</span>
+    </div>
+    <p id="fileInfo" class="file-info hidden"></p>
+    <button id="batchBtn" class="btn-primary" disabled>
+      <span id="batchBtnText">Start Batch</span>
+    </button>
+    <p id="batchStatus" class="status-msg hidden"></p>
+  </div>
+
+</div>
+<script src="popup.js"></script>
+</body>
+</html>
