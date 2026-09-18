@@ -53,7 +53,7 @@ async function runSingleCapture(options) {
   try {
     const dataUrl = await captureFullPage(captureTabId, captureWindowId, options);
     const id = crypto.randomUUID();
-    _captures.set(id, { dataUrl, title: tab.title || 'Screenshot', url: tab.url, timestamp: Date.now() });
+    _captures.set(id, { dataUrl, format: options.format || 'image/png', title: tab.title || 'Screenshot', url: tab.url, timestamp: Date.now() });
     chrome.tabs.create({ url: chrome.runtime.getURL(`preview/preview.html?id=${id}`) });
   } finally {
     if (ownWindow) chrome.windows.remove(captureWindowId).catch(() => {});
@@ -93,8 +93,9 @@ async function runBatch(items, options) {
         // Small JPEG thumbnail for display (stays in session storage safely)
         const thumb = await createThumbnail(dataUrl, 160);
 
-        _batchResults.push({ ...item, dataUrl, status: 'success' });
-        displayResults.push({ ...item, thumb, status: 'success' });
+        const fmt = options.format || 'image/png';
+        _batchResults.push({ ...item, dataUrl, format: fmt, status: 'success' });
+        displayResults.push({ ...item, thumb, format: fmt, status: 'success' });
       } catch (err) {
         console.error('[FPS] item:', item.url, err.message);
         _batchResults.push({ ...item, status: 'error', error: err.message });
@@ -125,17 +126,16 @@ async function captureFullPage(tabId, windowId, options = {}) {
   if (delay > 0) await sleep(delay * 1000);
 
   const info = await getPageInfo(tabId);
-  return captureAndStitch(tabId, windowId, info);
+  return captureAndStitch(tabId, windowId, info, options.format);
 }
 
-async function captureAndStitch(tabId, windowId, info) {
+async function captureAndStitch(tabId, windowId, info, format = 'image/png') {
   const { totalWidth, totalHeight, viewportWidth, viewportHeight, devicePixelRatio: dpr, scrollX: ox, scrollY: oy } = info;
   const maxX = Math.max(0, totalWidth  - viewportWidth);
   const maxY = Math.max(0, totalHeight - viewportHeight);
   const tiles = [];
 
   // Convert fixed→absolute and sticky→relative so they don't repeat on every tile.
-  // Fixed elements are out of flow, so this doesn't change scroll dimensions.
   await chrome.scripting.executeScript({
     target: { tabId },
     func: () => {
@@ -167,7 +167,6 @@ async function captureAndStitch(tabId, windowId, info) {
       y += viewportHeight;
     }
   } finally {
-    // Restore original position values before scrolling back
     await chrome.scripting.executeScript({
       target: { tabId },
       func: () => {
@@ -181,7 +180,7 @@ async function captureAndStitch(tabId, windowId, info) {
     await restoreScroll(tabId, ox, oy);
   }
 
-  return stitchTiles(tiles, totalWidth, totalHeight, dpr);
+  return stitchTiles(tiles, totalWidth, totalHeight, dpr, format);
 }
 
 // ── Pre-pass (slow scroll to trigger lazy-load / animations) ─────────────────
@@ -254,15 +253,24 @@ async function waitForTabLoad(tabId, timeout = 30000) {
 
 // ── Stitching (OffscreenCanvas, no offscreen document needed) ────────────────
 
-async function stitchTiles(tiles, totalWidth, totalHeight, dpr) {
-  const canvas = new OffscreenCanvas(Math.round(totalWidth * dpr), Math.round(totalHeight * dpr));
-  const ctx = canvas.getContext('2d');
+async function stitchTiles(tiles, totalWidth, totalHeight, dpr, format = 'image/png') {
+  const quality = { 'image/jpeg': 0.92, 'image/webp': 0.90 }[format];
+  const canvas  = new OffscreenCanvas(Math.round(totalWidth * dpr), Math.round(totalHeight * dpr));
+  const ctx     = canvas.getContext('2d');
+
+  // JPEG has no transparency — fill white first
+  if (format === 'image/jpeg') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
   for (const tile of tiles) {
     const bitmap = await createImageBitmap(dataUrlToBlob(tile.dataUrl));
     ctx.drawImage(bitmap, Math.round(tile.x * dpr), Math.round(tile.y * dpr));
     bitmap.close();
   }
-  const blob = await canvas.convertToBlob({ type: 'image/png' });
+
+  const blob = await canvas.convertToBlob({ type: format, quality });
   return blobToDataUrl(blob);
 }
 

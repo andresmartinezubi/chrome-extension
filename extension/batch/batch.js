@@ -58,9 +58,10 @@ function renderResults(results, runningIndex) {
     li.className = 'result-item';
 
     const thumbSlot = document.createElement('div');
-    if (r.status === 'success' && r.thumb) {
+    const thumbSrc  = r.thumb || (r.status === 'success' ? r.dataUrl : null);
+    if (thumbSrc) {
       const img = document.createElement('img');
-      img.src       = r.thumb;
+      img.src       = thumbSrc;
       img.className = 'result-thumb';
       img.alt       = r.product || r.url;
       thumbSlot.appendChild(img);
@@ -121,14 +122,18 @@ zipBtn.addEventListener('click', async () => {
     const zip = new JSZip();
     const folder = zip.folder('screenshots');
 
+    const extMap = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+
     succeeded.forEach((r, i) => {
-      const [, b64] = r.dataUrl.split(',');
+      const [header, b64] = r.dataUrl.split(',');
+      const mime = r.format || header.match(/:(.*?);/)[1];
+      const ext  = extMap[mime] || 'png';
       const parts = [
         r.number   ? String(r.number).padStart(3, '0') : String(i + 1).padStart(3, '0'),
         r.category ? safeName(r.category) : null,
         r.product  ? safeName(r.product)  : null,
       ].filter(Boolean);
-      const filename = parts.join('_') + '.png';
+      const filename = parts.join('_') + '.' + ext;
       folder.file(filename, b64, { base64: true });
     });
 

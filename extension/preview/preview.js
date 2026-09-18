@@ -41,6 +41,11 @@ const zoomLabel     = document.getElementById('zoomLabel');
     pageUrl.textContent   = data.url   || '';
     document.title        = `Screenshot — ${data.title || 'Preview'}`;
 
+    // Pre-select the format that was used to capture
+    if (data.format && formatSelect.querySelector(`option[value="${data.format}"]`)) {
+      formatSelect.value = data.format;
+    }
+
     img.src = originalDataUrl;
     img.onload = () => {
       const w = img.naturalWidth;

@@ -85,6 +85,11 @@ header {
   width: 52px; padding: 4px 6px; text-align: center;
   border: 1px solid var(--border); border-radius: 5px; font-size: 13px;
 }
+.format-sel {
+  padding: 4px 6px; border: 1px solid var(--border);
+  border-radius: 5px; font-size: 13px; background: var(--bg);
+  color: var(--text); cursor: pointer;
+}
 .check-row {
   display: flex; align-items: flex-start; gap: 7px; cursor: pointer;
   line-height: 1.4;

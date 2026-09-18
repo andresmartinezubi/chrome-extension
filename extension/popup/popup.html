@@ -41,6 +41,14 @@
   <section class="section">
     <div class="sec-title">Options</div>
     <div class="opt-row">
+      <label for="captureFormat">Format</label>
+      <select id="captureFormat" class="format-sel">
+        <option value="image/png">PNG — lossless</option>
+        <option value="image/jpeg" selected>JPEG — smaller</option>
+        <option value="image/webp">WebP — smallest</option>
+      </select>
+    </div>
+    <div class="opt-row">
       <label for="delayInput">Delay before capture</label>
       <div class="num-row">
         <input type="number" id="delayInput" min="0" max="60" value="0" class="num-input"> sec

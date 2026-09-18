@@ -33,6 +33,7 @@ function getViewport() {
 function getOptions() {
   return {
     viewport: getViewport(),
+    format:   document.getElementById('captureFormat').value,
     delay:    parseFloat(document.getElementById('delayInput').value) || 0,
     prePass:  document.getElementById('prePassCheck').checked,
   };
