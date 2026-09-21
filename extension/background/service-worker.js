@@ -2,7 +2,6 @@ const CAPTURE_MS = 750; // respects ~2 captureVisibleTab calls/sec limit
 
 // In-memory stores — avoids chrome.storage.session quota limits
 const _captures = new Map(); // uuid → { dataUrl, title, url, timestamp }
-let _batchResults = [];      // full results with dataUrls, for ZIP download
 
 // ── Message handler ──────────────────────────────────────────────────────────
 
@@ -23,9 +22,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     sendResponse(data);
     return true;
   }
-  if (msg.action === 'get-batch-results') {
-    sendResponse({ results: _batchResults });
-    return true;
+  if (msg.action === 'show-downloads-folder') {
+    chrome.downloads.showDefaultFolder();
+    sendResponse({});
+    return false;
   }
 });
 
@@ -63,9 +63,9 @@ async function runSingleCapture(options) {
 // ── Batch capture ─────────────────────────────────────────────────────────────
 
 async function runBatch(items, options) {
-  _batchResults = [];
+  const folderName = 'screenshots_' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
   await chrome.tabs.create({ url: chrome.runtime.getURL('batch/batch.html') });
-  await setBatchProgress({ total: items.length, current: 0, results: [], status: 'running' });
+  await setBatchProgress({ total: items.length, current: 0, results: [], status: 'running', folderName });
   await sleep(700);
 
   const vp = options.viewport;
@@ -94,11 +94,21 @@ async function runBatch(items, options) {
         const thumb = await createThumbnail(dataUrl, 160);
 
         const fmt = options.format || 'image/png';
-        _batchResults.push({ ...item, dataUrl, format: fmt, status: 'success' });
+        const ext = ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' })[fmt] || 'png';
+        const parts = [
+          item.number   ? String(item.number).padStart(3, '0') : String(i + 1).padStart(3, '0'),
+          item.category ? safeFilename(item.category) : null,
+          item.product  ? safeFilename(item.product)  : null,
+        ].filter(Boolean);
+        await chrome.downloads.download({
+          url: dataUrl,
+          filename: folderName + '/' + parts.join('_') + '.' + ext,
+          saveAs: false,
+          conflictAction: 'uniquify',
+        });
         displayResults.push({ ...item, thumb, format: fmt, status: 'success' });
       } catch (err) {
         console.error('[FPS] item:', item.url, err.message);
-        _batchResults.push({ ...item, status: 'error', error: err.message });
         displayResults.push({ ...item, status: 'error', error: err.message });
       }
     }
@@ -106,7 +116,7 @@ async function runBatch(items, options) {
     chrome.windows.remove(win.id).catch(() => {});
   }
 
-  await setBatchProgress({ total: items.length, current: items.length, results: displayResults, status: 'done' });
+  await setBatchProgress({ total: items.length, current: items.length, results: displayResults, status: 'done', folderName });
 }
 
 async function setBatchProgress(data) {
@@ -305,6 +315,10 @@ async function blobToDataUrl(blob) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function safeFilename(str) {
+  return String(str).replace(/[^a-z0-9]/gi, '_').slice(0, 30).replace(/_+/g, '_').replace(/^_|_$/g, '');
+}
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
